@@ -3,6 +3,9 @@ import json
 import os
 import pandas as pd
 import numpy as np
+from datetime import date
+
+
 
 # Find the folder where the script is located
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,10 +17,52 @@ config_path = os.path.join(base_dir, "config.json")
 with open(config_path, "r") as f:
     config = json.load(f)
 
+
 tickers = config["tickers"]
 start_date = config["start_date"]
 end_date = config["end_date"]
 weights = np.array(config["weights"])
+
+
+
+#Converting strings to dates format
+start_date = date.strptime(start_date, "%Y-%m-%d")
+end_date = date.strptime(end_date, "%Y-%m-%d")
+
+
+
+
+# Validating the configuration file
+#=================================================================================================================================
+
+#Checking if ticker exist
+for ticker in tickers:
+    ticker_check = yf.Ticker(ticker)
+    hist = ticker_check.history(period="1d")
+    if hist.empty:
+        print(f"Ticker '{ticker}' is invalid.")
+        exit()
+
+#Checking if sum of weights equels 100%
+if sum(weights) != 1:
+    print("The weight data must add up to 1. Please correct the data.")
+    exit()
+
+# Checking if the number of tickers or weights is correct
+if len(tickers) != len(weights):
+    print("Please check whether the number of tickers and weights is correct.")
+    exit()
+
+# Checking whether the date range is valid and not reversed (start vs end)
+if end_date < start_date:
+    print("Please verify that the date range is valid and that the start and end dates are not reversed.")
+    exit()
+
+if end_date >= date.today():
+    print("The end date must be yesterday or later. Please check the value you entered.")
+    exit()
+#=================================================================================================================================
+
 
 
 # Function for downloading data
